@@ -74,16 +74,41 @@ export default function DisplayPage() {
             {state.currentNumber === 0 ? "—" : state.currentNumber}
           </div>
           
-          {/* 顯示目前號碼的狀態 */}
-          {state.currentNumber > 0 && currentTicket && (
-            <div className="mt-4 md:mt-6">
-              <div className="inline-block px-4 md:px-6 py-2 md:py-3 rounded-full text-sm md:text-base font-medium mb-3 md:mb-4 bg-blue-100 text-blue-800">
-                狀態：{statusLabels[currentTicket.status]}
-              </div>
-              {currentTicket.note && (
-                <div className="mt-4 p-4 md:p-5 bg-gray-50 rounded-lg border-l-4 border-blue-500 text-left max-w-2xl mx-auto">
-                  <p className="text-sm md:text-base font-semibold text-gray-700 mb-2">備註</p>
-                  <p className="text-sm md:text-base text-gray-900 whitespace-pre-wrap break-words">
+          {/* 顯示目前號碼的狀態和備註 */}
+          {state.currentNumber > 0 && (
+            <div className="mt-6 md:mt-8 space-y-4 md:space-y-5">
+              {/* 處理進度 */}
+              {currentTicket ? (
+                <div className="flex flex-col items-center gap-3 md:gap-4">
+                  <p className="text-base md:text-lg text-gray-600 font-medium">處理進度</p>
+                  <div className={`inline-block px-5 md:px-7 py-2.5 md:py-3.5 rounded-full text-base md:text-lg font-semibold ${
+                    currentTicket.status === "processing" ? "bg-blue-500 text-white" :
+                    currentTicket.status === "completed" ? "bg-green-500 text-white" :
+                    currentTicket.status === "cancelled" ? "bg-red-500 text-white" :
+                    "bg-yellow-500 text-white"
+                  }`}>
+                    {statusLabels[currentTicket.status]}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3 md:gap-4">
+                  <p className="text-base md:text-lg text-gray-600 font-medium">處理進度</p>
+                  <div className="inline-block px-5 md:px-7 py-2.5 md:py-3.5 rounded-full text-base md:text-lg font-semibold bg-gray-400 text-white">
+                    處理中
+                  </div>
+                </div>
+              )}
+              
+              {/* 管理員備註 */}
+              {currentTicket?.note && (
+                <div className="mt-4 md:mt-6 p-5 md:p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 text-left max-w-3xl mx-auto shadow-md">
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg className="w-5 h-5 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <p className="text-base md:text-lg font-bold text-blue-900">管理員備註</p>
+                  </div>
+                  <p className="text-sm md:text-base text-gray-800 whitespace-pre-wrap break-words leading-relaxed">
                     {currentTicket.note}
                   </p>
                 </div>

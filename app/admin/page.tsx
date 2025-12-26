@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface QueueState {
   currentNumber: number;
@@ -40,6 +40,7 @@ export default function AdminPage() {
   const [editingTicket, setEditingTicket] = useState<number | null>(null);
   const [editStatus, setEditStatus] = useState<TicketStatus>("pending");
   const [editNote, setEditNote] = useState<string>("");
+  const editingTicketRef = useRef<number | null>(null);
 
   const fetchState = async () => {
     try {
@@ -63,11 +64,18 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    editingTicketRef.current = editingTicket;
+  }, [editingTicket]);
+
+  useEffect(() => {
     fetchState();
     fetchTickets();
     const interval = setInterval(() => {
       fetchState();
-      fetchTickets();
+      // Only update tickets if not currently editing
+      if (editingTicketRef.current === null) {
+        fetchTickets();
+      }
     }, 2000); // 每 2 秒更新一次
     return () => clearInterval(interval);
   }, []);
