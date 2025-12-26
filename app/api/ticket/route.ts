@@ -20,6 +20,17 @@ export async function POST(request: Request) {
     const ticketNumber = await redis.incr("queue:last");
     await redis.rpush("queue:tickets", ticketNumber);
 
+    // Store ticket info in Redis Hash
+    const key = `queue:ticket:${ticketNumber}`;
+    await redis.hset(key, {
+      customerName,
+      customerRequirement,
+      machineType,
+      startDate,
+      status: "pending",
+      note: "",
+    });
+
     return NextResponse.json({ ticketNumber });
   } catch (error) {
     return NextResponse.json(

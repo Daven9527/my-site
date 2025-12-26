@@ -11,6 +11,10 @@ type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
+  customerName?: string;
+  customerRequirement?: string;
+  machineType?: string;
+  startDate?: string;
   status: TicketStatus;
   note: string;
 }
@@ -18,6 +22,8 @@ interface TicketInfo {
 interface TicketListResponse {
   tickets: TicketInfo[];
 }
+
+const ADMIN_PASSWORD = "Bailey";
 
 const statusLabels: Record<TicketStatus, string> = {
   pending: "等待中",
@@ -34,13 +40,44 @@ const statusColors: Record<TicketStatus, string> = {
 };
 
 export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [state, setState] = useState<QueueState>({ currentNumber: 0, lastTicket: 0 });
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingTicket, setEditingTicket] = useState<number | null>(null);
   const [editStatus, setEditStatus] = useState<TicketStatus>("pending");
   const [editNote, setEditNote] = useState<string>("");
+  const [viewingTicket, setViewingTicket] = useState<TicketInfo | null>(null);
   const editingTicketRef = useRef<number | null>(null);
+
+  // Check if already authenticated (from sessionStorage)
+  useEffect(() => {
+    const authStatus = sessionStorage.getItem("adminAuthenticated");
+    if (authStatus === "true") {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem("adminAuthenticated", "true");
+      setPassword("");
+    } else {
+      setPasswordError("密碼錯誤，請重試");
+      setPassword("");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem("adminAuthenticated");
+  };
 
   const fetchState = async () => {
     try {
@@ -68,6 +105,8 @@ export default function AdminPage() {
   }, [editingTicket]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     fetchState();
     fetchTickets();
     const interval = setInterval(() => {
@@ -78,7 +117,7 @@ export default function AdminPage() {
       }
     }, 2000); // 每 2 秒更新一次
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated]);
 
   const handleNext = async () => {
     setLoading(true);
@@ -147,6 +186,57 @@ export default function AdminPage() {
     }
   };
 
+  // Password authentication screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">管理員登入</h1>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  密碼
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setPasswordError("");
+                  }}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                  placeholder="請輸入密碼"
+                  autoFocus
+                />
+              </div>
+              {passwordError && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                  <p className="text-sm text-red-600">{passwordError}</p>
+                </div>
+              )}
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-blue-600 px-6 py-3 text-white font-medium shadow-md hover:bg-blue-700 transition-colors"
+              >
+                登入
+              </button>
+            </form>
+            <div className="mt-6 text-center">
+              <a
+                href="/"
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                返回首頁
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const waitingCount = state.lastTicket - state.currentNumber;
   const isCurrentNumber = (ticketNumber: number) => ticketNumber === state.currentNumber;
   const isCalled = (ticketNumber: number) => ticketNumber <= state.currentNumber;
@@ -158,7 +248,18 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 md:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 md:mb-8 text-center">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">管理員控制台</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex-1"></div>
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900 flex-1">管理員控制台</h1>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={handleLogout}
+                className="rounded-lg bg-gray-600 px-4 py-2 text-sm md:text-base text-white font-medium hover:bg-gray-700 transition-colors"
+              >
+                登出
+              </button>
+            </div>
+          </div>
           <p className="text-sm md:text-base text-gray-600">叫號系統管理</p>
         </div>
 
@@ -291,7 +392,10 @@ export default function AdminPage() {
                   ) : (
                     <div>
                       <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
+                        <div 
+                          className="flex-1 cursor-pointer"
+                          onClick={() => setViewingTicket(ticket)}
+                        >
                           <div
                             className={`text-xl md:text-2xl font-bold mb-2 ${
                               isCurrentNumber(ticket.ticketNumber)
@@ -316,18 +420,32 @@ export default function AdminPage() {
                             </span>
                           </div>
                         </div>
-                        <button
-                          onClick={() => startEdit(ticket)}
-                          className="rounded-lg bg-blue-600 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-white font-medium hover:bg-blue-700 transition-colors whitespace-nowrap"
-                        >
-                          編輯
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewingTicket(ticket);
+                            }}
+                            className="rounded-lg bg-green-600 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-white font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
+                          >
+                            查看
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEdit(ticket);
+                            }}
+                            className="rounded-lg bg-blue-600 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-white font-medium hover:bg-blue-700 transition-colors whitespace-nowrap"
+                          >
+                            編輯
+                          </button>
+                        </div>
                       </div>
 
                       {ticket.note && (
                         <div className="mt-3 p-2 md:p-3 bg-gray-50 rounded-lg border-l-4 border-blue-500">
                           <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">備註</p>
-                          <p className="text-sm md:text-base text-gray-900 break-words whitespace-pre-wrap">
+                          <p className="text-sm md:text-base text-gray-900 break-words whitespace-pre-wrap line-clamp-2">
                             {ticket.note}
                           </p>
                         </div>
@@ -349,6 +467,114 @@ export default function AdminPage() {
           </a>
         </div>
       </div>
+
+      {/* 彈窗：顯示完整票券資訊 */}
+      {viewingTicket && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setViewingTicket(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 md:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  號碼 #{viewingTicket.ticketNumber} 詳細資訊
+                </h2>
+                <button
+                  onClick={() => setViewingTicket(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4 md:space-y-5">
+                {/* 狀態 */}
+                <div>
+                  <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理進度</p>
+                  <div className={`inline-block px-4 md:px-5 py-2 md:py-2.5 rounded-full text-sm md:text-base font-semibold ${statusColors[viewingTicket.status]}`}>
+                    {statusLabels[viewingTicket.status]}
+                  </div>
+                </div>
+
+                {/* 客戶名稱 */}
+                {viewingTicket.customerName && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">客戶名稱</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words">{viewingTicket.customerName}</p>
+                  </div>
+                )}
+
+                {/* 客戶需求 */}
+                {viewingTicket.customerRequirement && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">客戶需求</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-gray-50 p-3 md:p-4 rounded-lg">
+                      {viewingTicket.customerRequirement}
+                    </p>
+                  </div>
+                )}
+
+                {/* 預計使用機種 */}
+                {viewingTicket.machineType && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">預計使用機種</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words">{viewingTicket.machineType}</p>
+                  </div>
+                )}
+
+                {/* 起始日期 */}
+                {viewingTicket.startDate && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">起始日期</p>
+                    <p className="text-base md:text-lg text-gray-900">{viewingTicket.startDate}</p>
+                  </div>
+                )}
+
+                {/* 管理員備註 */}
+                {viewingTicket.note && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">管理員備註</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-blue-50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500">
+                      {viewingTicket.note}
+                    </p>
+                  </div>
+                )}
+
+                {/* 如果沒有客戶資訊，顯示提示 */}
+                {!viewingTicket.customerName && !viewingTicket.customerRequirement && !viewingTicket.machineType && !viewingTicket.startDate && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm md:text-base">此票券沒有客戶資訊</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 md:mt-8 flex gap-3">
+                <button
+                  onClick={() => {
+                    setViewingTicket(null);
+                    startEdit(viewingTicket);
+                  }}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium hover:bg-blue-700 transition-colors"
+                >
+                  編輯狀態與備註
+                </button>
+                <button
+                  onClick={() => setViewingTicket(null)}
+                  className="flex-1 rounded-lg bg-gray-200 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-gray-800 font-medium hover:bg-gray-300 transition-colors"
+                >
+                  關閉
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

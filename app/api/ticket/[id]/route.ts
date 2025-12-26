@@ -7,6 +7,10 @@ type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
+  customerName?: string;
+  customerRequirement?: string;
+  machineType?: string;
+  startDate?: string;
   status: TicketStatus;
   note: string;
 }
@@ -23,7 +27,14 @@ export async function GET(
     }
 
     const key = `queue:ticket:${ticketNumber}`;
-    const data = await redis.hgetall<{ status?: string; note?: string }>(key);
+    const data = await redis.hgetall<{
+      customerName?: string;
+      customerRequirement?: string;
+      machineType?: string;
+      startDate?: string;
+      status?: string;
+      note?: string;
+    }>(key);
 
     if (!data || Object.keys(data).length === 0) {
       // Return default values if ticket info doesn't exist
@@ -36,6 +47,10 @@ export async function GET(
 
     return NextResponse.json({
       ticketNumber,
+      customerName: data.customerName || "",
+      customerRequirement: data.customerRequirement || "",
+      machineType: data.machineType || "",
+      startDate: data.startDate || "",
       status: (data?.status || "pending") as TicketStatus,
       note: data?.note || "",
     });
