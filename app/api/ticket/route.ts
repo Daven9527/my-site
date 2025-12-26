@@ -1,8 +1,30 @@
 import { NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
 
-export async function POST() {
-  // lastTicket += 1
-  const ticketNumber = await redis.incr("queue:last");
-  return NextResponse.json({ ticketNumber });
+export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { customerName, customerRequirement, machineType, startDate } = body;
+
+    // Validate required fields
+    if (!customerName || !customerRequirement || !machineType || !startDate) {
+      return NextResponse.json(
+        { error: "所有欄位都是必填的" },
+        { status: 400 }
+      );
+    }
+
+    // Increment last ticket number and add to tickets list
+    const ticketNumber = await redis.incr("queue:last");
+    await redis.rpush("queue:tickets", ticketNumber);
+
+    return NextResponse.json({ ticketNumber });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "處理請求時發生錯誤" },
+      { status: 500 }
+    );
+  }
 }
