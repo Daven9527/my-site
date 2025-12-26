@@ -77,31 +77,44 @@ export async function PATCH(
     const { status, note } = body;
 
     const key = `queue:ticket:${ticketNumber}`;
-    const updates: { status?: string; note?: string } = {};
+    const updates: Record<string, string> = {};
 
-    if (status !== undefined) {
+    if (status !== undefined && status !== null) {
       if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
         return NextResponse.json({ error: "無效的狀態" }, { status: 400 });
       }
-      updates.status = status;
+      updates.status = String(status);
     }
 
-    if (note !== undefined) {
-      updates.note = note;
+    if (note !== undefined && note !== null) {
+      updates.note = String(note);
     }
 
     if (Object.keys(updates).length > 0) {
       await redis.hset(key, updates);
     }
 
-    // Return updated ticket info
-    const data = await redis.hgetall<{ status?: string; note?: string }>(key);
+    // Return updated ticket info with all fields
+    const data = await redis.hgetall<{
+      customerName?: string;
+      customerRequirement?: string;
+      machineType?: string;
+      startDate?: string;
+      status?: string;
+      note?: string;
+    }>(key);
+    
     return NextResponse.json({
       ticketNumber,
+      customerName: data?.customerName || "",
+      customerRequirement: data?.customerRequirement || "",
+      machineType: data?.machineType || "",
+      startDate: data?.startDate || "",
       status: (data?.status || "pending") as TicketStatus,
       note: data?.note || "",
     });
   } catch (error) {
+    console.error("Error updating ticket:", error);
     return NextResponse.json(
       { error: "處理請求時發生錯誤" },
       { status: 500 }

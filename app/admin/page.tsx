@@ -156,6 +156,7 @@ export default function AdminPage() {
     setEditingTicket(null);
     setEditStatus("pending");
     setEditNote("");
+    editingTicketRef.current = null;
   };
 
   const saveEdit = async (ticketNumber: number) => {
@@ -173,14 +174,18 @@ export default function AdminPage() {
       });
 
       if (!res.ok) {
-        throw new Error("更新失敗");
+        const errorData = await res.json();
+        throw new Error(errorData.error || "更新失敗");
       }
 
-      await fetchTickets();
+      // Clear editing state first to allow refresh
       cancelEdit();
+      
+      // Force refresh tickets to show updated data
+      await fetchTickets();
     } catch (error) {
       console.error("Failed to update ticket:", error);
-      alert("更新失敗，請重試");
+      alert(error instanceof Error ? error.message : "更新失敗，請重試");
     } finally {
       setLoading(false);
     }
@@ -374,14 +379,20 @@ export default function AdminPage() {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => saveEdit(ticket.ticketNumber)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            saveEdit(ticket.ticketNumber);
+                          }}
                           disabled={loading}
                           className="flex-1 rounded-lg bg-blue-600 px-3 md:px-4 py-2 text-sm md:text-base text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           儲存
                         </button>
                         <button
-                          onClick={cancelEdit}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelEdit();
+                          }}
                           disabled={loading}
                           className="flex-1 rounded-lg bg-gray-200 px-3 md:px-4 py-2 text-sm md:text-base text-gray-800 font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
