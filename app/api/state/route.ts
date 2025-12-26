@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { getState } from "@/lib/queue-store";
+import { redis } from "@/lib/redis";
 
 export async function GET() {
-  const state = getState();
-  return NextResponse.json(state);
-}
+  const currentNumber = (await redis.get<number>("queue:current")) ?? 0;
+  const lastTicket = (await redis.get<number>("queue:last")) ?? 0;
 
+  return NextResponse.json({ currentNumber, lastTicket });
+}

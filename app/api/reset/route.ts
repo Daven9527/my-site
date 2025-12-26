@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { reset } from "@/lib/queue-store";
+import { redis } from "@/lib/redis";
 
 export async function POST() {
-  reset();
-  return NextResponse.json({ success: true });
-}
+  await redis.mset({
+    "queue:current": 0,
+    "queue:last": 0,
+  });
 
+  return NextResponse.json({ ok: true });
+}
