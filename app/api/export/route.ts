@@ -79,7 +79,7 @@ export async function GET() {
 
     // 生成文件名（包含當前日期時間）
     const now = new Date();
-    const fileName = `票券資料_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}.xlsx`;
+    const fileName = `票券資料_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}.xlsx`;
 
     // 返回 Excel 文件
     return new NextResponse(excelBuffer, {
