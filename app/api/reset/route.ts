@@ -19,6 +19,7 @@ export async function POST() {
     await redis.mset({
       "queue:current": 0,
       "queue:last": 0,
+      "queue:next": 1,
     });
     // Clear the tickets list
     await redis.del("queue:tickets");

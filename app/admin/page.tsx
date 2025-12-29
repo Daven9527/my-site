@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 interface QueueState {
   currentNumber: number;
   lastTicket: number;
+  nextNumber?: number;
 }
 
 type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
@@ -47,7 +48,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [state, setState] = useState<QueueState>({ currentNumber: 0, lastTicket: 0 });
+  const [state, setState] = useState<QueueState>({ currentNumber: 0, lastTicket: 0, nextNumber: 1 });
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingTicket, setEditingTicket] = useState<number | null>(null);
@@ -58,6 +59,10 @@ export default function AdminPage() {
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [resetPassword, setResetPassword] = useState("");
   const [resetPasswordError, setResetPasswordError] = useState("");
+  const [editingCurrentNumber, setEditingCurrentNumber] = useState(false);
+  const [newCurrentNumber, setNewCurrentNumber] = useState<string>("");
+  const [editingNextNumber, setEditingNextNumber] = useState(false);
+  const [newNextNumber, setNewNextNumber] = useState<string>("");
   const editingTicketRef = useRef<number | null>(null);
 
   // Check if already authenticated (from sessionStorage)
@@ -176,6 +181,86 @@ export default function AdminPage() {
     setShowResetPasswordModal(false);
     setResetPassword("");
     setResetPasswordError("");
+  };
+
+  const handleUpdateCurrentNumber = async () => {
+    const numberValue = Number(newCurrentNumber);
+    if (isNaN(numberValue)) {
+      alert("請輸入有效的數字");
+      return;
+    }
+
+    // 不套用跳號邏輯，允許設置任何值
+    setLoading(true);
+    try {
+      const res = await fetch("/api/state", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ currentNumber: numberValue }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "更新失敗");
+      }
+
+      setEditingCurrentNumber(false);
+      setNewCurrentNumber("");
+      await fetchState();
+      await fetchTickets();
+    } catch (error) {
+      console.error("Failed to update current number:", error);
+      alert(error instanceof Error ? error.message : "更新失敗，請重試");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEditCurrentNumber = () => {
+    setEditingCurrentNumber(false);
+    setNewCurrentNumber("");
+  };
+
+  const handleUpdateNextNumber = async () => {
+    const nextNumberValue = Number(newNextNumber);
+    if (isNaN(nextNumberValue)) {
+      alert("請輸入有效的數字");
+      return;
+    }
+
+    // 只更新下一號，不改變目前號碼
+    setLoading(true);
+    try {
+      const res = await fetch("/api/state", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nextNumber: nextNumberValue }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "更新失敗");
+      }
+
+      setEditingNextNumber(false);
+      setNewNextNumber("");
+      await fetchState();
+      await fetchTickets();
+    } catch (error) {
+      console.error("Failed to update next number:", error);
+      alert(error instanceof Error ? error.message : "更新失敗，請重試");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEditNextNumber = () => {
+    setEditingNextNumber(false);
+    setNewNextNumber("");
   };
 
   const startEdit = (ticket: TicketInfo) => {
@@ -304,7 +389,7 @@ export default function AdminPage() {
     );
   }
 
-  const waitingCount = state.lastTicket - state.currentNumber;
+  const waitingCount = tickets.filter(ticket => ticket.status === "pending").length;
   const isCurrentNumber = (ticketNumber: number) => ticketNumber === state.currentNumber;
   const isCalled = (ticketNumber: number) => ticketNumber <= state.currentNumber;
 
@@ -336,8 +421,49 @@ export default function AdminPage() {
             <h2 className="mb-3 md:mb-4 text-lg md:text-xl font-semibold text-gray-800">目前狀態</h2>
             <div className="space-y-3 md:space-y-4">
               <div>
-                <p className="text-xs md:text-sm text-gray-600">目前叫到的號碼</p>
-                <p className="text-2xl md:text-3xl font-bold text-blue-600">{state.currentNumber}</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs md:text-sm text-gray-600">目前叫到的號碼</p>
+                  {!editingCurrentNumber && (
+                    <button
+                      onClick={() => {
+                        setEditingCurrentNumber(true);
+                        setNewCurrentNumber(String(state.currentNumber));
+                      }}
+                      className="text-xs md:text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      編輯
+                    </button>
+                  )}
+                </div>
+                {editingCurrentNumber ? (
+                  <div className="space-y-2">
+                    <input
+                      type="number"
+                      value={newCurrentNumber}
+                      onChange={(e) => setNewCurrentNumber(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="輸入號碼"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleUpdateCurrentNumber}
+                        disabled={loading}
+                        className="flex-1 rounded-lg bg-blue-600 px-3 md:px-4 py-2 text-xs md:text-sm text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        確認
+                      </button>
+                      <button
+                        onClick={handleCancelEditCurrentNumber}
+                        disabled={loading}
+                        className="flex-1 rounded-lg bg-gray-200 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-800 font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-2xl md:text-3xl font-bold text-blue-600">{state.currentNumber}</p>
+                )}
               </div>
               <div>
                 <p className="text-xs md:text-sm text-gray-600">最後發出的票號</p>
@@ -346,6 +472,54 @@ export default function AdminPage() {
               <div>
                 <p className="text-xs md:text-sm text-gray-600">候位數量</p>
                 <p className="text-2xl md:text-3xl font-bold text-orange-600">{waitingCount}</p>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs md:text-sm text-gray-600">下一號</p>
+                  {!editingNextNumber && (
+                    <button
+                      onClick={() => {
+                        setEditingNextNumber(true);
+                        const nextNumber = state.nextNumber ?? (state.currentNumber + 1);
+                        setNewNextNumber(String(nextNumber));
+                      }}
+                      className="text-xs md:text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      編輯
+                    </button>
+                  )}
+                </div>
+                {editingNextNumber ? (
+                  <div className="space-y-2">
+                    <input
+                      type="number"
+                      value={newNextNumber}
+                      onChange={(e) => setNewNextNumber(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="輸入下一號"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleUpdateNextNumber}
+                        disabled={loading}
+                        className="flex-1 rounded-lg bg-blue-600 px-3 md:px-4 py-2 text-xs md:text-sm text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        確認
+                      </button>
+                      <button
+                        onClick={handleCancelEditNextNumber}
+                        disabled={loading}
+                        className="flex-1 rounded-lg bg-gray-200 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-800 font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-2xl md:text-3xl font-bold text-purple-600">
+                    {state.nextNumber ?? (state.currentNumber + 1)}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -361,7 +535,7 @@ export default function AdminPage() {
               </a>
               <button
                 onClick={handleNext}
-                disabled={loading || state.currentNumber >= state.lastTicket}
+                disabled={loading || (state.nextNumber ?? (state.currentNumber + 1)) > state.lastTicket}
                 className="w-full rounded-lg bg-purple-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 下一號

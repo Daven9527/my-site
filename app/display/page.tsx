@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 interface QueueState {
   currentNumber: number;
   lastTicket: number;
+  nextNumber?: number;
 }
 
 type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
@@ -41,7 +42,7 @@ const statusColors: Record<TicketStatus, string> = {
 };
 
 export default function DisplayPage() {
-  const [state, setState] = useState<QueueState>({ currentNumber: 0, lastTicket: 0 });
+  const [state, setState] = useState<QueueState>({ currentNumber: 0, lastTicket: 0, nextNumber: 1 });
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
   const [viewingTicket, setViewingTicket] = useState<TicketInfo | null>(null);
 
@@ -73,7 +74,7 @@ export default function DisplayPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const nextNumber = state.currentNumber < state.lastTicket ? state.currentNumber + 1 : null;
+  const nextNumber = state.nextNumber ?? (state.currentNumber < state.lastTicket ? state.currentNumber + 1 : null);
   
   // Find current ticket info
   const currentTicket = tickets.find((t) => t.ticketNumber === state.currentNumber);
