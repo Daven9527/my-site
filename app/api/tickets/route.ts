@@ -13,6 +13,8 @@ interface TicketInfo {
   machineType?: string;
   startDate?: string;
   expectedCompletionDate?: string;
+  fcst?: string;
+  massProductionDate?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -42,6 +44,8 @@ export async function GET() {
           machineType?: string;
           startDate?: string;
           expectedCompletionDate?: string;
+          fcst?: string;
+          massProductionDate?: string;
           status?: string;
           note?: string;
           assignee?: string;
@@ -62,6 +66,8 @@ export async function GET() {
           machineType: data?.machineType || "",
           startDate: data?.startDate || "",
           expectedCompletionDate: data?.expectedCompletionDate || "",
+          fcst: data?.fcst || "",
+          massProductionDate: data?.massProductionDate || "",
           status,
           note: data?.note || "",
           assignee: data?.assignee || "",

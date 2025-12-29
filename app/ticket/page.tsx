@@ -12,6 +12,8 @@ export default function TicketPage() {
     machineType: "",
     startDate: "",
     expectedCompletionDate: "",
+    fcst: "",
+    massProductionDate: "",
   });
   const [loading, setLoading] = useState(false);
   const [ticketNumber, setTicketNumber] = useState<number | null>(null);
@@ -64,6 +66,8 @@ export default function TicketPage() {
       machineType: "",
       startDate: "",
       expectedCompletionDate: "",
+      fcst: "",
+      massProductionDate: "",
     });
     setError(null);
   };
@@ -124,6 +128,18 @@ export default function TicketPage() {
                   <p className="text-xs md:text-sm text-gray-600">期望完成日期</p>
                   <p className="text-sm md:text-base font-medium text-gray-900">
                     {formData.expectedCompletionDate}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-gray-600">FCST</p>
+                  <p className="text-sm md:text-base font-medium text-gray-900 break-words">
+                    {formData.fcst}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-gray-600">預計量產日</p>
+                  <p className="text-sm md:text-base font-medium text-gray-900">
+                    {formData.massProductionDate}
                   </p>
                 </div>
               </div>
@@ -232,6 +248,45 @@ export default function TicketPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                 placeholder="請輸入機種名稱"
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="fcst"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  FCST <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="fcst"
+                  name="fcst"
+                  value={formData.fcst}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                  placeholder="請輸入 FCST"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="massProductionDate"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  預計量產日 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  id="massProductionDate"
+                  name="massProductionDate"
+                  value={formData.massProductionDate}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
             </div>
 
             <div>

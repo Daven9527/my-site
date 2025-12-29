@@ -249,7 +249,6 @@ export default function DisplayPage() {
                       PM：{ticket.assignee}
                     </div>
                   )}
-                  
                 </div>
               ))}
             </div>

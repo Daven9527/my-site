@@ -13,6 +13,8 @@ interface TicketInfo {
   machineType?: string;
   startDate?: string;
   expectedCompletionDate?: string;
+  fcst?: string;
+  massProductionDate?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -37,6 +39,8 @@ export async function GET(
       machineType?: string;
       startDate?: string;
       expectedCompletionDate?: string;
+      fcst?: string;
+      massProductionDate?: string;
       status?: string;
       note?: string;
       assignee?: string;
@@ -51,6 +55,8 @@ export async function GET(
         assignee: "",
         applicant: "",
         expectedCompletionDate: "",
+        fcst: "",
+        massProductionDate: "",
       });
     }
 
@@ -62,6 +68,8 @@ export async function GET(
       machineType: data.machineType || "",
       startDate: data.startDate || "",
       expectedCompletionDate: data.expectedCompletionDate || "",
+      fcst: data.fcst || "",
+      massProductionDate: data.massProductionDate || "",
       status: (data?.status || "pending") as TicketStatus,
       note: data?.note || "",
       assignee: data?.assignee || "",
@@ -86,7 +94,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, note, assignee } = body;
+    const { status, note, assignee, fcst, massProductionDate } = body;
 
     const key = `queue:ticket:${ticketNumber}`;
     const updates: Record<string, string> = {};
@@ -106,6 +114,14 @@ export async function PATCH(
       updates.assignee = String(assignee);
     }
 
+    if (fcst !== undefined && fcst !== null) {
+      updates.fcst = String(fcst);
+    }
+
+    if (massProductionDate !== undefined && massProductionDate !== null) {
+      updates.massProductionDate = String(massProductionDate);
+    }
+
     if (Object.keys(updates).length > 0) {
       await redis.hset(key, updates);
     }
@@ -118,6 +134,8 @@ export async function PATCH(
       machineType?: string;
       startDate?: string;
       expectedCompletionDate?: string;
+      fcst?: string;
+      massProductionDate?: string;
       status?: string;
       note?: string;
       assignee?: string;
@@ -131,6 +149,8 @@ export async function PATCH(
       machineType: data?.machineType || "",
       startDate: data?.startDate || "",
       expectedCompletionDate: data?.expectedCompletionDate || "",
+      fcst: data?.fcst || "",
+      massProductionDate: data?.massProductionDate || "",
       status: (data?.status || "pending") as TicketStatus,
       note: data?.note || "",
       assignee: data?.assignee || "",

@@ -6,7 +6,16 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { applicant, customerName, customerRequirement, machineType, startDate, expectedCompletionDate } = body;
+    const {
+      applicant,
+      customerName,
+      customerRequirement,
+      machineType,
+      startDate,
+      expectedCompletionDate,
+      fcst,
+      massProductionDate,
+    } = body;
 
     // Validate required fields
     if (
@@ -15,7 +24,9 @@ export async function POST(request: Request) {
       !customerRequirement ||
       !machineType ||
       !startDate ||
-      !expectedCompletionDate
+      !expectedCompletionDate ||
+      !fcst ||
+      !massProductionDate
     ) {
       return NextResponse.json(
         { error: "所有欄位都是必填的" },
@@ -36,6 +47,8 @@ export async function POST(request: Request) {
       machineType,
       startDate,
       expectedCompletionDate,
+      fcst,
+      massProductionDate,
       status: "pending",
       note: "",
       assignee: "",

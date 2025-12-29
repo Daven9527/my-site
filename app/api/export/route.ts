@@ -30,6 +30,8 @@ export async function GET() {
           machineType?: string;
           startDate?: string;
           expectedCompletionDate?: string;
+          fcst?: string;
+          massProductionDate?: string;
           status?: string;
           note?: string;
           assignee?: string;
@@ -43,6 +45,8 @@ export async function GET() {
           預計使用機種: data?.machineType || "",
           起始日期: data?.startDate || "",
           期望完成日期: data?.expectedCompletionDate || "",
+          FCST: data?.fcst || "",
+          預計量產日: data?.massProductionDate || "",
           處理進度: data?.status || "pending",
           備註: data?.note || "",
           PM: data?.assignee || "",
@@ -63,6 +67,8 @@ export async function GET() {
       { wch: 20 }, // 預計使用機種
       { wch: 15 }, // 起始日期
       { wch: 15 }, // 期望完成日期
+      { wch: 12 }, // FCST
+      { wch: 15 }, // 預計量產日
       { wch: 12 }, // 處理進度
       { wch: 30 }, // 備註
       { wch: 12 }, // PM

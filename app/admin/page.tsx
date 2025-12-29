@@ -18,6 +18,8 @@ interface TicketInfo {
   machineType?: string;
   startDate?: string;
   expectedCompletionDate?: string;
+  fcst?: string;
+  massProductionDate?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -846,6 +848,22 @@ export default function AdminPage() {
                         </p>
                       </div>
                     )}
+                    {ticket.fcst && (
+                      <div className="mt-3 p-2 md:p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                        <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">FCST</p>
+                        <p className="text-sm md:text-base text-gray-900 break-words">
+                          {ticket.fcst}
+                        </p>
+                      </div>
+                    )}
+                    {ticket.massProductionDate && (
+                      <div className="mt-3 p-2 md:p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                        <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">預計量產日</p>
+                        <p className="text-sm md:text-base text-gray-900 break-words">
+                          {ticket.massProductionDate}
+                        </p>
+                      </div>
+                    )}
                     </div>
                   )}
                 </div>
@@ -964,6 +982,26 @@ export default function AdminPage() {
                     <p className="text-sm md:text-base font-medium text-gray-600 mb-2">PM</p>
                     <p className="text-base md:text-lg text-gray-900 break-words bg-purple-50 p-3 md:p-4 rounded-lg border-l-4 border-purple-500">
                       {viewingTicket.assignee}
+                    </p>
+                  </div>
+                )}
+
+                {/* FCST */}
+                {viewingTicket.fcst && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">FCST</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-yellow-50 p-3 md:p-4 rounded-lg border-l-4 border-yellow-500">
+                      {viewingTicket.fcst}
+                    </p>
+                  </div>
+                )}
+
+                {/* 預計量產日 */}
+                {viewingTicket.massProductionDate && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">預計量產日</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-green-50 p-3 md:p-4 rounded-lg border-l-4 border-green-500">
+                      {viewingTicket.massProductionDate}
                     </p>
                   </div>
                 )}
