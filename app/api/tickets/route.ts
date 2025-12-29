@@ -7,12 +7,14 @@ type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
+  applicant?: string;
   customerName?: string;
   customerRequirement?: string;
   machineType?: string;
   startDate?: string;
   status: TicketStatus;
   note: string;
+  assignee?: string;
 }
 
 export async function GET() {
@@ -33,12 +35,14 @@ export async function GET() {
       ticketNumbers.map(async (ticketNumber) => {
         const key = `queue:ticket:${ticketNumber}`;
         const data = await redis.hgetall<{
+          applicant?: string;
           customerName?: string;
           customerRequirement?: string;
           machineType?: string;
           startDate?: string;
           status?: string;
           note?: string;
+          assignee?: string;
         }>(key);
 
         // Validate status value
@@ -50,12 +54,14 @@ export async function GET() {
 
         return {
           ticketNumber,
+          applicant: data?.applicant || "",
           customerName: data?.customerName || "",
           customerRequirement: data?.customerRequirement || "",
           machineType: data?.machineType || "",
           startDate: data?.startDate || "",
           status,
           note: data?.note || "",
+          assignee: data?.assignee || "",
         };
       })
     );

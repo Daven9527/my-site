@@ -7,12 +7,14 @@ type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
+  applicant?: string;
   customerName?: string;
   customerRequirement?: string;
   machineType?: string;
   startDate?: string;
   status: TicketStatus;
   note: string;
+  assignee?: string;
 }
 
 export async function GET(
@@ -28,12 +30,14 @@ export async function GET(
 
     const key = `queue:ticket:${ticketNumber}`;
     const data = await redis.hgetall<{
+      applicant?: string;
       customerName?: string;
       customerRequirement?: string;
       machineType?: string;
       startDate?: string;
       status?: string;
       note?: string;
+      assignee?: string;
     }>(key);
 
     if (!data || Object.keys(data).length === 0) {
@@ -42,17 +46,21 @@ export async function GET(
         ticketNumber,
         status: "pending" as TicketStatus,
         note: "",
+        assignee: "",
+        applicant: "",
       });
     }
 
     return NextResponse.json({
       ticketNumber,
+      applicant: data.applicant || "",
       customerName: data.customerName || "",
       customerRequirement: data.customerRequirement || "",
       machineType: data.machineType || "",
       startDate: data.startDate || "",
       status: (data?.status || "pending") as TicketStatus,
       note: data?.note || "",
+      assignee: data?.assignee || "",
     });
   } catch (error) {
     return NextResponse.json(
@@ -74,7 +82,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, note } = body;
+    const { status, note, assignee } = body;
 
     const key = `queue:ticket:${ticketNumber}`;
     const updates: Record<string, string> = {};
@@ -90,31 +98,77 @@ export async function PATCH(
       updates.note = String(note);
     }
 
+    if (assignee !== undefined && assignee !== null) {
+      updates.assignee = String(assignee);
+    }
+
     if (Object.keys(updates).length > 0) {
       await redis.hset(key, updates);
     }
 
     // Return updated ticket info with all fields
     const data = await redis.hgetall<{
+      applicant?: string;
       customerName?: string;
       customerRequirement?: string;
       machineType?: string;
       startDate?: string;
       status?: string;
       note?: string;
+      assignee?: string;
     }>(key);
     
     return NextResponse.json({
       ticketNumber,
+      applicant: data?.applicant || "",
       customerName: data?.customerName || "",
       customerRequirement: data?.customerRequirement || "",
       machineType: data?.machineType || "",
       startDate: data?.startDate || "",
       status: (data?.status || "pending") as TicketStatus,
       note: data?.note || "",
+      assignee: data?.assignee || "",
     });
   } catch (error) {
     console.error("Error updating ticket:", error);
+    return NextResponse.json(
+      { error: "處理請求時發生錯誤" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const ticketNumber = parseInt(id);
+    if (isNaN(ticketNumber)) {
+      return NextResponse.json({ error: "無效的票號" }, { status: 400 });
+    }
+
+    // Delete ticket info hash
+    const key = `queue:ticket:${ticketNumber}`;
+    await redis.del(key);
+
+    // Remove ticket number from tickets list
+    // Get all ticket numbers, filter out the one to delete, then replace the list
+    const allTickets = await redis.lrange<number>("queue:tickets", 0, -1);
+    const filteredTickets = (allTickets || [])
+      .map((t: any) => Number(t))
+      .filter((n: number) => n !== ticketNumber && Number.isFinite(n));
+    
+    // Delete the old list and recreate it with filtered values
+    await redis.del("queue:tickets");
+    if (filteredTickets.length > 0) {
+      await redis.rpush("queue:tickets", ...filteredTickets);
+    }
+
+    return NextResponse.json({ ok: true, ticketNumber });
+  } catch (error) {
+    console.error("Error deleting ticket:", error);
     return NextResponse.json(
       { error: "處理請求時發生錯誤" },
       { status: 500 }

@@ -6,10 +6,10 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { customerName, customerRequirement, machineType, startDate } = body;
+    const { applicant, customerName, customerRequirement, machineType, startDate } = body;
 
     // Validate required fields
-    if (!customerName || !customerRequirement || !machineType || !startDate) {
+    if (!applicant || !customerName || !customerRequirement || !machineType || !startDate) {
       return NextResponse.json(
         { error: "所有欄位都是必填的" },
         { status: 400 }
@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     // Store ticket info in Redis Hash
     const key = `queue:ticket:${ticketNumber}`;
     await redis.hset(key, {
+      applicant,
       customerName,
       customerRequirement,
       machineType,

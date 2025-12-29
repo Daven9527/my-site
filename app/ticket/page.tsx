@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 export default function TicketPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
+    applicant: "",
     customerName: "",
     customerRequirement: "",
     machineType: "",
@@ -56,6 +57,7 @@ export default function TicketPage() {
   const handleReset = () => {
     setTicketNumber(null);
     setFormData({
+      applicant: "",
       customerName: "",
       customerRequirement: "",
       machineType: "",
@@ -86,6 +88,12 @@ export default function TicketPage() {
                 您的資訊
               </h3>
               <div className="space-y-2 md:space-y-3">
+                <div>
+                  <p className="text-xs md:text-sm text-gray-600">申請人</p>
+                  <p className="text-sm md:text-base font-medium text-gray-900 break-words">
+                    {formData.applicant}
+                  </p>
+                </div>
                 <div>
                   <p className="text-xs md:text-sm text-gray-600">客戶名稱</p>
                   <p className="text-sm md:text-base font-medium text-gray-900 break-words">
@@ -142,6 +150,25 @@ export default function TicketPage() {
 
         <div className="rounded-xl bg-white p-4 md:p-8 shadow-lg">
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label
+                htmlFor="applicant"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                申請人 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="applicant"
+                name="applicant"
+                value={formData.applicant}
+                onChange={handleChange}
+                required
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                placeholder="請輸入申請人姓名"
+              />
+            </div>
+
             <div>
               <label
                 htmlFor="customerName"

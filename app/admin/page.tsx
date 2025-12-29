@@ -11,12 +11,14 @@ type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
+  applicant?: string;
   customerName?: string;
   customerRequirement?: string;
   machineType?: string;
   startDate?: string;
   status: TicketStatus;
   note: string;
+  assignee?: string;
 }
 
 interface TicketListResponse {
@@ -49,6 +51,7 @@ export default function AdminPage() {
   const [editingTicket, setEditingTicket] = useState<number | null>(null);
   const [editStatus, setEditStatus] = useState<TicketStatus>("pending");
   const [editNote, setEditNote] = useState<string>("");
+  const [editAssignee, setEditAssignee] = useState<string>("");
   const [viewingTicket, setViewingTicket] = useState<TicketInfo | null>(null);
   const editingTicketRef = useRef<number | null>(null);
 
@@ -150,12 +153,14 @@ export default function AdminPage() {
     setEditingTicket(ticket.ticketNumber);
     setEditStatus(ticket.status);
     setEditNote(ticket.note);
+    setEditAssignee(ticket.assignee || "");
   };
 
   const cancelEdit = () => {
     setEditingTicket(null);
     setEditStatus("pending");
     setEditNote("");
+    setEditAssignee("");
     editingTicketRef.current = null;
   };
 
@@ -170,6 +175,7 @@ export default function AdminPage() {
         body: JSON.stringify({
           status: editStatus,
           note: editNote,
+          assignee: editAssignee,
         }),
       });
 
@@ -186,6 +192,33 @@ export default function AdminPage() {
     } catch (error) {
       console.error("Failed to update ticket:", error);
       alert(error instanceof Error ? error.message : "更新失敗，請重試");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (ticketNumber: number) => {
+    if (!confirm(`確定要刪除號碼 #${ticketNumber} 嗎？此操作無法復原。`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/ticket/${ticketNumber}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "刪除失敗");
+      }
+
+      // Refresh tickets and state
+      await fetchTickets();
+      await fetchState();
+    } catch (error) {
+      console.error("Failed to delete ticket:", error);
+      alert(error instanceof Error ? error.message : "刪除失敗，請重試");
     } finally {
       setLoading(false);
     }
@@ -377,6 +410,18 @@ export default function AdminPage() {
                           placeholder="輸入備註內容..."
                         />
                       </div>
+                      <div>
+                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
+                          處理者
+                        </label>
+                        <input
+                          type="text"
+                          value={editAssignee}
+                          onChange={(e) => setEditAssignee(e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          placeholder="輸入處理者姓名"
+                        />
+                      </div>
                       <div className="flex gap-2">
                         <button
                           onClick={(e) => {
@@ -418,6 +463,16 @@ export default function AdminPage() {
                           >
                             #{ticket.ticketNumber}
                           </div>
+                          {ticket.applicant && (
+                            <div className="text-sm md:text-base text-gray-700 mb-2">
+                              申請人：{ticket.applicant}
+                            </div>
+                          )}
+                          {ticket.assignee && (
+                            <div className="text-sm md:text-base text-gray-700 mb-2">
+                              處理者：{ticket.assignee}
+                            </div>
+                          )}
                           <div className="flex flex-wrap items-center gap-2">
                             {isCurrentNumber(ticket.ticketNumber) && (
                               <span className="px-2 py-1 rounded-full bg-blue-600 text-white text-xs font-medium whitespace-nowrap">
@@ -450,6 +505,16 @@ export default function AdminPage() {
                           >
                             編輯
                           </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(ticket.ticketNumber);
+                            }}
+                            disabled={loading}
+                            className="rounded-lg bg-red-600 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-white font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                          >
+                            刪除
+                          </button>
                         </div>
                       </div>
 
@@ -458,6 +523,14 @@ export default function AdminPage() {
                           <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">備註</p>
                           <p className="text-sm md:text-base text-gray-900 break-words whitespace-pre-wrap line-clamp-2">
                             {ticket.note}
+                          </p>
+                        </div>
+                      )}
+                      {ticket.assignee && (
+                        <div className="mt-3 p-2 md:p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                          <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">處理者</p>
+                          <p className="text-sm md:text-base text-gray-900 break-words">
+                            {ticket.assignee}
                           </p>
                         </div>
                       )}
@@ -513,6 +586,14 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* 申請人 */}
+                {viewingTicket.applicant && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">申請人</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words">{viewingTicket.applicant}</p>
+                  </div>
+                )}
+
                 {/* 客戶名稱 */}
                 {viewingTicket.customerName && (
                   <div>
@@ -553,6 +634,16 @@ export default function AdminPage() {
                     <p className="text-sm md:text-base font-medium text-gray-600 mb-2">管理員備註</p>
                     <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-blue-50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500">
                       {viewingTicket.note}
+                    </p>
+                  </div>
+                )}
+
+                {/* 處理者 */}
+                {viewingTicket.assignee && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理者</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-purple-50 p-3 md:p-4 rounded-lg border-l-4 border-purple-500">
+                      {viewingTicket.assignee}
                     </p>
                   </div>
                 )}

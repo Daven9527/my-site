@@ -13,6 +13,7 @@ interface TicketInfo {
   ticketNumber: number;
   status: TicketStatus;
   note: string;
+  assignee?: string;
 }
 
 interface TicketListResponse {
@@ -138,6 +139,21 @@ export default function DisplayPage() {
                     </p>
                   </div>
                 )}
+
+                {/* 處理者 */}
+                {currentTicket?.assignee && (
+                  <div className="mt-4 md:mt-6 p-5 md:p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200 text-left max-w-3xl mx-auto shadow-md">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-5 h-5 md:w-6 md:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <p className="text-base md:text-lg font-bold text-purple-900">處理者</p>
+                    </div>
+                    <p className="text-sm md:text-base text-gray-800 break-words leading-relaxed">
+                      {currentTicket.assignee}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -196,6 +212,11 @@ export default function DisplayPage() {
                   {ticket.note && (
                     <div className="mt-2 p-2 bg-black/20 rounded text-xs text-gray-200 break-words line-clamp-2">
                       {ticket.note}
+                    </div>
+                  )}
+                  {ticket.assignee && (
+                    <div className="mt-2 p-2 bg-purple-500/30 rounded text-xs text-purple-100 break-words">
+                      處理者：{ticket.assignee}
                     </div>
                   )}
                 </div>
