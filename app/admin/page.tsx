@@ -56,9 +56,10 @@ export default function AdminPage() {
   const [editNote, setEditNote] = useState<string>("");
   const [editAssignee, setEditAssignee] = useState<string>("");
   const [viewingTicket, setViewingTicket] = useState<TicketInfo | null>(null);
-  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
-  const [resetPassword, setResetPassword] = useState("");
-  const [resetPasswordError, setResetPasswordError] = useState("");
+  const [showSuperAdminModal, setShowSuperAdminModal] = useState(false);
+  const [superAdminPassword, setSuperAdminPassword] = useState("");
+  const [superAdminPasswordError, setSuperAdminPasswordError] = useState("");
+  const [isSuperAdminAuthenticated, setIsSuperAdminAuthenticated] = useState(false);
   const [editingCurrentNumber, setEditingCurrentNumber] = useState(false);
   const [newCurrentNumber, setNewCurrentNumber] = useState<string>("");
   const [editingNextNumber, setEditingNextNumber] = useState(false);
@@ -145,43 +146,58 @@ export default function AdminPage() {
     }
   };
 
-  const handleResetClick = () => {
-    setShowResetPasswordModal(true);
-    setResetPassword("");
-    setResetPasswordError("");
+  const handleSuperAdminClick = () => {
+    setShowSuperAdminModal(true);
+    setSuperAdminPassword("");
+    setSuperAdminPasswordError("");
+    setIsSuperAdminAuthenticated(false);
   };
 
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+  const handleSuperAdminPasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setResetPasswordError("");
+    setSuperAdminPasswordError("");
 
-    if (resetPassword !== RESET_PASSWORD) {
-      setResetPasswordError("密碼錯誤，請重試");
-      setResetPassword("");
+    if (superAdminPassword === RESET_PASSWORD) {
+      setIsSuperAdminAuthenticated(true);
+      setSuperAdminPassword("");
+    } else {
+      setSuperAdminPasswordError("密碼錯誤，請重試");
+      setSuperAdminPassword("");
+    }
+  };
+
+  const handleSuperAdminCancel = () => {
+    setShowSuperAdminModal(false);
+    setSuperAdminPassword("");
+    setSuperAdminPasswordError("");
+    setIsSuperAdminAuthenticated(false);
+  };
+
+  const handleResetClick = () => {
+    if (!confirm("確定要重置系統嗎？此操作將清除所有號碼和資料，且無法復原。")) {
       return;
     }
-
-    // Password is correct, proceed with reset
-    setShowResetPasswordModal(false);
-    setResetPassword("");
+    
+    // 關閉超級管理員彈窗
+    handleSuperAdminCancel();
+    
+    // 直接執行重置，因為已經在超級管理員彈窗中驗證過密碼
     setLoading(true);
-    try {
-      await fetch("/api/reset", { method: "POST" });
-      await fetchState();
-      await fetchTickets();
-    } catch (error) {
-      console.error("Failed to reset:", error);
-      alert("重置失敗，請重試");
-    } finally {
-      setLoading(false);
-    }
+    (async () => {
+      try {
+        await fetch("/api/reset", { method: "POST" });
+        await fetchState();
+        await fetchTickets();
+        alert("系統已重置");
+      } catch (error) {
+        console.error("Failed to reset:", error);
+        alert("重置失敗，請重試");
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
-  const handleResetCancel = () => {
-    setShowResetPasswordModal(false);
-    setResetPassword("");
-    setResetPasswordError("");
-  };
 
   const handleUpdateCurrentNumber = async () => {
     const numberValue = Number(newCurrentNumber);
@@ -261,6 +277,92 @@ export default function AdminPage() {
   const handleCancelEditNextNumber = () => {
     setEditingNextNumber(false);
     setNewNextNumber("");
+  };
+
+  const handleExportExcel = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/export");
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "匯出失敗");
+      }
+
+      // 獲取文件名
+      const contentDisposition = res.headers.get("Content-Disposition");
+      let fileName = "票券資料.xlsx";
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (fileNameMatch) {
+          fileName = decodeURIComponent(fileNameMatch[1]);
+        }
+      }
+
+      // 下載文件
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Failed to export:", error);
+      alert(error instanceof Error ? error.message : "匯出失敗，請重試");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImportExcel = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xlsx,.xls";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("password", RESET_PASSWORD);
+
+        const res = await fetch("/api/import", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "匯入失敗");
+        }
+
+        // 顯示匯入結果
+        let message = `匯入完成！\n新增：${data.imported} 筆\n更新：${data.updated} 筆`;
+        if (data.errors && data.errors.length > 0) {
+          message += `\n\n錯誤：\n${data.errors.slice(0, 10).join("\n")}`;
+          if (data.errors.length > 10) {
+            message += `\n... 還有 ${data.errors.length - 10} 個錯誤`;
+          }
+        }
+        alert(message);
+
+        // 刷新資料
+        await fetchState();
+        await fetchTickets();
+      } catch (error) {
+        console.error("Failed to import:", error);
+        alert(error instanceof Error ? error.message : "匯入失敗，請重試");
+      } finally {
+        setLoading(false);
+      }
+    };
+    input.click();
   };
 
   const startEdit = (ticket: TicketInfo) => {
@@ -541,11 +643,18 @@ export default function AdminPage() {
                 下一號
               </button>
               <button
-                onClick={handleResetClick}
+                onClick={handleExportExcel}
                 disabled={loading}
-                className="w-full rounded-lg bg-red-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full rounded-lg bg-green-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                重置
+                匯出 Excel
+              </button>
+              <button
+                onClick={handleSuperAdminClick}
+                disabled={loading}
+                className="w-full rounded-lg bg-orange-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                超級管理員
               </button>
             </div>
           </div>
@@ -889,69 +998,115 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* 重置密碼彈窗 */}
-      {showResetPasswordModal && (
+      {/* 超級管理員彈窗 */}
+      {showSuperAdminModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          onClick={handleResetCancel}
+          onClick={handleSuperAdminCancel}
         >
           <div
-            className="bg-white rounded-xl shadow-2xl max-w-md w-full"
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6 md:p-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">
-                重置系統確認
-              </h2>
-              <p className="text-sm md:text-base text-gray-600 mb-6 text-center">
-                此操作將清除所有號碼和資料，請輸入密碼確認
-              </p>
-              <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="resetPassword"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    密碼
-                  </label>
-                  <input
-                    type="password"
-                    id="resetPassword"
-                    value={resetPassword}
-                    onChange={(e) => {
-                      setResetPassword(e.target.value);
-                      setResetPasswordError("");
-                    }}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors"
-                    placeholder="請輸入重置密碼"
-                    autoFocus
-                    required
-                  />
-                  {resetPasswordError && (
-                    <p className="mt-2 text-sm text-red-600">{resetPasswordError}</p>
-                  )}
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={handleResetCancel}
-                    className="flex-1 rounded-lg bg-gray-200 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-gray-800 font-medium hover:bg-gray-300 transition-colors"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 rounded-lg bg-red-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    確認重置
-                  </button>
-                </div>
-              </form>
+              {!isSuperAdminAuthenticated ? (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                      超級管理員
+                    </h2>
+                    <button
+                      onClick={handleSuperAdminCancel}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-sm md:text-base text-gray-600 mb-6 text-center">
+                    請輸入密碼以進入超級管理員功能
+                  </p>
+                  <form onSubmit={handleSuperAdminPasswordSubmit} className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="superAdminPassword"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        密碼
+                      </label>
+                      <input
+                        type="password"
+                        id="superAdminPassword"
+                        value={superAdminPassword}
+                        onChange={(e) => {
+                          setSuperAdminPassword(e.target.value);
+                          setSuperAdminPasswordError("");
+                        }}
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none transition-colors"
+                        placeholder="請輸入密碼"
+                        autoFocus
+                        required
+                      />
+                      {superAdminPasswordError && (
+                        <p className="mt-2 text-sm text-red-600">{superAdminPasswordError}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={handleSuperAdminCancel}
+                        className="flex-1 rounded-lg bg-gray-200 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-gray-800 font-medium hover:bg-gray-300 transition-colors"
+                      >
+                        取消
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 rounded-lg bg-orange-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-orange-700 transition-colors"
+                      >
+                        確認
+                      </button>
+                    </div>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                      超級管理員功能
+                    </h2>
+                    <button
+                      onClick={handleSuperAdminCancel}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="space-y-3 md:space-y-4">
+                    <button
+                      onClick={handleResetClick}
+                      disabled={loading}
+                      className="w-full rounded-lg bg-red-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      重置系統
+                    </button>
+                    <button
+                      onClick={handleImportExcel}
+                      disabled={loading}
+                      className="w-full rounded-lg bg-indigo-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      匯入 Excel
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
