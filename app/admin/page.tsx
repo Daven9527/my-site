@@ -948,10 +948,10 @@ export default function AdminPage() {
                   </div>
                 )}
 
-                {/* 管理員備註 */}
+                {/* 處理者備註 */}
                 {viewingTicket.note && (
                   <div>
-                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">管理員備註</p>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理者備註</p>
                     <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-blue-50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500">
                       {viewingTicket.note}
                     </p>

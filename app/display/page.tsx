@@ -133,7 +133,7 @@ export default function DisplayPage() {
                   </div>
                 )}
                 
-                {/* 管理員備註 */}
+                {/* 處理者備註 */}
                 {currentTicket?.note && (
                   <div className="mt-4 md:mt-6 p-5 md:p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 text-left max-w-3xl mx-auto shadow-md">
                     <div className="flex items-center gap-2 mb-3">
@@ -231,6 +231,11 @@ export default function DisplayPage() {
                   {isCurrentNumber(ticket.ticketNumber) && (
                     <div className="mt-2 px-2 py-1 rounded-full bg-blue-600 text-white text-xs font-medium">
                       目前號碼
+                    </div>
+                  )}
+                  {ticket.applicant && (
+                    <div className="mt-2 p-2 bg-green-500/30 rounded text-xs text-green-100 break-words">
+                      申請人：{ticket.applicant}
                     </div>
                   )}
                   {ticket.note && (
@@ -339,10 +344,10 @@ export default function DisplayPage() {
                   </div>
                 )}
 
-                {/* 管理員備註 */}
+                {/* 處理者備註 */}
                 {viewingTicket.note && (
                   <div>
-                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">管理員備註</p>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理者備註</p>
                     <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-blue-50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500">
                       {viewingTicket.note}
                     </p>
