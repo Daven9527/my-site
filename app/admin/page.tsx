@@ -18,6 +18,7 @@ interface TicketInfo {
   machineType?: string;
   startDate?: string;
   expectedCompletionDate?: string;
+  expectedPM?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -724,14 +725,14 @@ export default function AdminPage() {
                       </div>
                       <div>
                         <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                          處理者
+                          PM
                         </label>
                         <input
                           type="text"
                           value={editAssignee}
                           onChange={(e) => setEditAssignee(e.target.value)}
                           className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          placeholder="輸入處理者姓名"
+                          placeholder="輸入PM姓名"
                         />
                       </div>
                       <div className="flex gap-2">
@@ -782,7 +783,7 @@ export default function AdminPage() {
                           )}
                           {ticket.assignee && (
                             <div className="text-sm md:text-base text-gray-700 mb-2">
-                              處理者：{ticket.assignee}
+                              PM：{ticket.assignee}
                             </div>
                           )}
                           <div className="flex flex-wrap items-center gap-2">
@@ -840,12 +841,20 @@ export default function AdminPage() {
                       )}
                       {ticket.assignee && (
                         <div className="mt-3 p-2 md:p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-                          <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">處理者</p>
+                        <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">PM</p>
                           <p className="text-sm md:text-base text-gray-900 break-words">
                             {ticket.assignee}
                           </p>
                         </div>
                       )}
+                    {ticket.expectedPM && (
+                      <div className="mt-3 p-2 md:p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                        <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">期望 PM</p>
+                        <p className="text-sm md:text-base text-gray-900 break-words">
+                          {ticket.expectedPM}
+                        </p>
+                      </div>
+                    )}
                     </div>
                   )}
                 </div>
@@ -948,22 +957,32 @@ export default function AdminPage() {
                   </div>
                 )}
 
-                {/* 處理者備註 */}
+                {/* PM 備註 */}
                 {viewingTicket.note && (
                   <div>
-                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理者備註</p>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">PM 備註</p>
                     <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-blue-50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500">
                       {viewingTicket.note}
                     </p>
                   </div>
                 )}
 
-                {/* 處理者 */}
+                {/* PM */}
                 {viewingTicket.assignee && (
                   <div>
-                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理者</p>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">PM</p>
                     <p className="text-base md:text-lg text-gray-900 break-words bg-purple-50 p-3 md:p-4 rounded-lg border-l-4 border-purple-500">
                       {viewingTicket.assignee}
+                    </p>
+                  </div>
+                )}
+
+                {/* 期望 PM */}
+                {viewingTicket.expectedPM && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">期望 PM</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-green-50 p-3 md:p-4 rounded-lg border-l-4 border-green-500">
+                      {viewingTicket.expectedPM}
                     </p>
                   </div>
                 )}

@@ -12,6 +12,7 @@ export default function TicketPage() {
     machineType: "",
     startDate: "",
     expectedCompletionDate: "",
+    expectedPM: "",
   });
   const [loading, setLoading] = useState(false);
   const [ticketNumber, setTicketNumber] = useState<number | null>(null);
@@ -64,6 +65,7 @@ export default function TicketPage() {
       machineType: "",
       startDate: "",
       expectedCompletionDate: "",
+      expectedPM: "",
     });
     setError(null);
   };
@@ -126,6 +128,14 @@ export default function TicketPage() {
                     {formData.expectedCompletionDate}
                   </p>
                 </div>
+                {formData.expectedPM && (
+                  <div>
+                    <p className="text-xs md:text-sm text-gray-600">期望 PM</p>
+                    <p className="text-sm md:text-base font-medium text-gray-900 break-words">
+                      {formData.expectedPM}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
@@ -231,6 +241,24 @@ export default function TicketPage() {
                 required
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                 placeholder="請輸入機種名稱"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="expectedPM"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                期望 PM
+              </label>
+              <input
+                type="text"
+                id="expectedPM"
+                name="expectedPM"
+                value={formData.expectedPM}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                placeholder="請輸入期望的 PM（可選）"
               />
             </div>
 

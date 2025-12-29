@@ -18,6 +18,7 @@ interface TicketInfo {
   machineType?: string;
   startDate?: string;
   expectedCompletionDate?: string;
+  expectedPM?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -133,14 +134,14 @@ export default function DisplayPage() {
                   </div>
                 )}
                 
-                {/* 處理者備註 */}
+                {/* PM 備註 */}
                 {currentTicket?.note && (
                   <div className="mt-4 md:mt-6 p-5 md:p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 text-left max-w-3xl mx-auto shadow-md">
                     <div className="flex items-center gap-2 mb-3">
                       <svg className="w-5 h-5 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                      <p className="text-base md:text-lg font-bold text-blue-900">處理者備註</p>
+                      <p className="text-base md:text-lg font-bold text-blue-900">PM 備註</p>
                     </div>
                     <p className="text-sm md:text-base text-gray-800 whitespace-pre-wrap break-words leading-relaxed">
                       {currentTicket.note}
@@ -148,17 +149,31 @@ export default function DisplayPage() {
                   </div>
                 )}
 
-                {/* 處理者 */}
+                {/* PM */}
                 {currentTicket?.assignee && (
                   <div className="mt-4 md:mt-6 p-5 md:p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200 text-left max-w-3xl mx-auto shadow-md">
                     <div className="flex items-center gap-2 mb-3">
                       <svg className="w-5 h-5 md:w-6 md:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      <p className="text-base md:text-lg font-bold text-purple-900">處理者</p>
+                      <p className="text-base md:text-lg font-bold text-purple-900">PM</p>
                     </div>
                     <p className="text-sm md:text-base text-gray-800 break-words leading-relaxed">
                       {currentTicket.assignee}
+                    </p>
+                  </div>
+                )}
+
+                {/* 期望 PM */}
+                {currentTicket?.expectedPM && (
+                  <div className="mt-4 md:mt-6 p-5 md:p-6 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200 text-left max-w-3xl mx-auto shadow-md">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <p className="text-sm md:text-base text-gray-800 break-words leading-relaxed">
+                      {currentTicket.expectedPM}
                     </p>
                   </div>
                 )}
@@ -245,7 +260,12 @@ export default function DisplayPage() {
                   )}
                   {ticket.assignee && (
                     <div className="mt-2 p-2 bg-purple-500/30 rounded text-xs text-purple-100 break-words">
-                      處理者：{ticket.assignee}
+                      PM：{ticket.assignee}
+                    </div>
+                  )}
+                  {ticket.expectedPM && (
+                    <div className="mt-2 p-2 bg-green-500/30 rounded text-xs text-green-100 break-words">
+                      期望 PM：{ticket.expectedPM}
                     </div>
                   )}
                 </div>
@@ -344,22 +364,32 @@ export default function DisplayPage() {
                   </div>
                 )}
 
-                {/* 處理者備註 */}
+                {/* PM 備註 */}
                 {viewingTicket.note && (
                   <div>
-                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理者備註</p>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">PM 備註</p>
                     <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-blue-50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500">
                       {viewingTicket.note}
                     </p>
                   </div>
                 )}
 
-                {/* 處理者 */}
+                {/* PM */}
                 {viewingTicket.assignee && (
                   <div>
-                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理者</p>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">PM</p>
                     <p className="text-base md:text-lg text-gray-900 break-words bg-purple-50 p-3 md:p-4 rounded-lg border-l-4 border-purple-500">
                       {viewingTicket.assignee}
+                    </p>
+                  </div>
+                )}
+
+                {/* 期望 PM */}
+                {viewingTicket.expectedPM && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">期望 PM</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-emerald-50 p-3 md:p-4 rounded-lg border-l-4 border-emerald-500">
+                      {viewingTicket.expectedPM}
                     </p>
                   </div>
                 )}

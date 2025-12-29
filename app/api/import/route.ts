@@ -60,7 +60,8 @@ export async function POST(request: Request) {
     const expectedCompletionDateIndex = headers.findIndex(h => h === "期望完成日期" || h === "完成日期" || h === "expectedCompletionDate");
     const statusIndex = headers.findIndex(h => h === "處理進度" || h === "狀態" || h === "status");
     const noteIndex = headers.findIndex(h => h === "備註" || h === "備註說明" || h === "note");
-    const assigneeIndex = headers.findIndex(h => h === "處理者" || h === "assignee");
+    const assigneeIndex = headers.findIndex(h => h === "PM" || h === "處理者" || h === "assignee");
+    const expectedPMIndex = headers.findIndex(h => h === "期望PM" || h === "expectedPM");
 
     if (ticketNumberIndex === -1) {
       return NextResponse.json(
@@ -101,6 +102,7 @@ export async function POST(request: Request) {
           status: row[statusIndex]?.toString() || "pending",
           note: row[noteIndex]?.toString() || "",
           assignee: row[assigneeIndex]?.toString() || "",
+          expectedPM: row[expectedPMIndex]?.toString() || "",
         };
 
         // 驗證狀態值
