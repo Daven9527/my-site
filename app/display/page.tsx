@@ -46,6 +46,33 @@ const statusColors: Record<TicketStatus, string> = {
   cancelled: "bg-red-500 text-white",
 };
 
+const taiwanDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Taipei",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+const getTaiwanDayIndex = (date: Date): number => {
+  const parts = taiwanDateFormatter.formatToParts(date);
+  const year = Number(parts.find((p) => p.type === "year")?.value);
+  const month = Number(parts.find((p) => p.type === "month")?.value);
+  const day = Number(parts.find((p) => p.type === "day")?.value);
+
+  if (!year || !month || !day) return NaN;
+  return Date.UTC(year, month - 1, day) / 86400000;
+};
+
+const calculateTaiwanDayDiff = (replyDate: string): number => {
+  const parsed = new Date(replyDate);
+  if (Number.isNaN(parsed.getTime())) return 0;
+
+  const diffDays = Math.floor(getTaiwanDayIndex(new Date()) - getTaiwanDayIndex(parsed));
+  return Number.isFinite(diffDays) ? Math.max(0, diffDays) : 0;
+};
+
+
+
 export default function DisplayPage() {
   const [state, setState] = useState<QueueState>({ currentNumber: 0, lastTicket: 0, nextNumber: 1 });
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
@@ -296,7 +323,7 @@ export default function DisplayPage() {
                   )}
                   {ticket.status === "replied" && ticket.replyDate && (
                     <div className="mt-2 p-2 bg-indigo-500/30 rounded text-xs text-indigo-100 break-words">
-                      已回覆累積天數：{Math.max(0, Math.floor((Date.now() - new Date(ticket.replyDate).getTime()) / (1000 * 60 * 60 * 24)))} 天
+                      已回覆累積天數：{calculateTaiwanDayDiff(ticket.replyDate)} 天
                     </div>
                   )}
                 </div>
@@ -445,13 +472,7 @@ export default function DisplayPage() {
                   <div>
                     <p className="text-sm md:text-base font-medium text-gray-600 mb-2">已回覆累積天數</p>
                     <p className="text-base md:text-lg text-gray-900 break-words bg-indigo-50 p-3 md:p-4 rounded-lg border-l-4 border-indigo-500">
-                      {Math.max(
-                        0,
-                        Math.floor(
-                          (Date.now() - new Date(viewingTicket.replyDate).getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        )
-                      )}{" "}
+                      {calculateTaiwanDayDiff(viewingTicket.replyDate)}{" "}
                       天
                     </p>
                   </div>
