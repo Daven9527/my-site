@@ -6,15 +6,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const {
-      applicant,
-      customerName,
-      customerRequirement,
-      machineType,
-      startDate,
-      expectedCompletionDate,
-      expectedPM,
-    } = body;
+    const { applicant, customerName, customerRequirement, machineType, startDate, expectedCompletionDate } = body;
 
     // Validate required fields
     if (
@@ -44,7 +36,6 @@ export async function POST(request: Request) {
       machineType,
       startDate,
       expectedCompletionDate,
-      expectedPM: expectedPM || "",
       status: "pending",
       note: "",
       assignee: "",

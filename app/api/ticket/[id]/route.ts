@@ -13,7 +13,6 @@ interface TicketInfo {
   machineType?: string;
   startDate?: string;
   expectedCompletionDate?: string;
-  expectedPM?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -38,7 +37,6 @@ export async function GET(
       machineType?: string;
       startDate?: string;
       expectedCompletionDate?: string;
-      expectedPM?: string;
       status?: string;
       note?: string;
       assignee?: string;
@@ -52,7 +50,6 @@ export async function GET(
         note: "",
         assignee: "",
         applicant: "",
-        expectedPM: "",
         expectedCompletionDate: "",
       });
     }
@@ -65,7 +62,6 @@ export async function GET(
       machineType: data.machineType || "",
       startDate: data.startDate || "",
       expectedCompletionDate: data.expectedCompletionDate || "",
-      expectedPM: data.expectedPM || "",
       status: (data?.status || "pending") as TicketStatus,
       note: data?.note || "",
       assignee: data?.assignee || "",
@@ -90,7 +86,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, note, assignee, expectedPM } = body;
+    const { status, note, assignee } = body;
 
     const key = `queue:ticket:${ticketNumber}`;
     const updates: Record<string, string> = {};
@@ -110,10 +106,6 @@ export async function PATCH(
       updates.assignee = String(assignee);
     }
 
-    if (expectedPM !== undefined && expectedPM !== null) {
-      updates.expectedPM = String(expectedPM);
-    }
-
     if (Object.keys(updates).length > 0) {
       await redis.hset(key, updates);
     }
@@ -126,7 +118,6 @@ export async function PATCH(
       machineType?: string;
       startDate?: string;
       expectedCompletionDate?: string;
-      expectedPM?: string;
       status?: string;
       note?: string;
       assignee?: string;
@@ -140,7 +131,6 @@ export async function PATCH(
       machineType: data?.machineType || "",
       startDate: data?.startDate || "",
       expectedCompletionDate: data?.expectedCompletionDate || "",
-      expectedPM: data?.expectedPM || "",
       status: (data?.status || "pending") as TicketStatus,
       note: data?.note || "",
       assignee: data?.assignee || "",
