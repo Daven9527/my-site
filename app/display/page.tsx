@@ -8,7 +8,7 @@ interface QueueState {
   nextNumber?: number;
 }
 
-type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
+type TicketStatus = "pending" | "processing" | "replied" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
@@ -21,6 +21,9 @@ interface TicketInfo {
   status: TicketStatus;
   note: string;
   assignee?: string;
+  replyDate?: string;
+  fcst?: string;
+  massProductionDate?: string;
 }
 
 interface TicketListResponse {
@@ -30,6 +33,7 @@ interface TicketListResponse {
 const statusLabels: Record<TicketStatus, string> = {
   pending: "等待中",
   processing: "處理中",
+  replied: "已回覆",
   completed: "已完成",
   cancelled: "已取消",
 };
@@ -37,6 +41,7 @@ const statusLabels: Record<TicketStatus, string> = {
 const statusColors: Record<TicketStatus, string> = {
   pending: "bg-yellow-500 text-white",
   processing: "bg-blue-500 text-white",
+  replied: "bg-indigo-500 text-white",
   completed: "bg-green-500 text-white",
   cancelled: "bg-red-500 text-white",
 };
@@ -45,14 +50,15 @@ export default function DisplayPage() {
   const [state, setState] = useState<QueueState>({ currentNumber: 0, lastTicket: 0, nextNumber: 1 });
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
   const [viewingTicket, setViewingTicket] = useState<TicketInfo | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitial = async () => {
       try {
-        // Fetch state and tickets in parallel
         const [stateRes, ticketsRes] = await Promise.all([
           fetch("/api/state", { cache: "no-store" }),
-          fetch("/api/tickets", { cache: "no-store" }),
+          fetch("/api/tickets?limit=50", { cache: "no-store" }),
         ]);
 
         const stateData = await stateRes.json();
@@ -65,14 +71,33 @@ export default function DisplayPage() {
       }
     };
 
-    // Initial fetch
-    fetchData();
-
-    // Polling every 1 second
-    const interval = setInterval(fetchData, 1000);
-
-    return () => clearInterval(interval);
+    fetchInitial();
   }, []);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    setRefreshMessage(null);
+    try {
+      const [stateRes, ticketsRes] = await Promise.all([
+        fetch("/api/state", { cache: "no-store" }),
+        fetch("/api/tickets?limit=50", { cache: "no-store" }),
+      ]);
+      if (!stateRes.ok) throw new Error("狀態取得失敗");
+      if (!ticketsRes.ok) throw new Error("號碼列表取得失敗");
+      const stateData: QueueState = await stateRes.json();
+      const ticketsData: TicketListResponse = await ticketsRes.json();
+      setState(stateData);
+      setTickets(ticketsData.tickets || []);
+      setRefreshMessage("已更新");
+      setTimeout(() => setRefreshMessage(null), 2000);
+    } catch (error) {
+      console.error("Manual refresh failed:", error);
+      setRefreshMessage("更新失敗");
+      setTimeout(() => setRefreshMessage(null), 2000);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const nextNumber = state.nextNumber ?? (state.currentNumber < state.lastTicket ? state.currentNumber + 1 : null);
   
@@ -98,6 +123,21 @@ export default function DisplayPage() {
           </a>
         </div>
 
+        <div className="mb-4 md:mb-6 flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4">
+          <button
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm md:text-base px-3 md:px-4 py-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isRefreshing ? "更新中…" : "更新狀態"}
+          </button>
+          {refreshMessage && (
+            <span className="text-sm md:text-base text-gray-200">
+              {refreshMessage}
+            </span>
+          )}
+        </div>
+
         {/* 目前叫號區塊 */}
         <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-6 md:mb-8 text-center">目前叫號</h1>
@@ -116,10 +156,15 @@ export default function DisplayPage() {
                   <div className="flex flex-col items-center gap-3 md:gap-4">
                     <p className="text-base md:text-lg text-gray-600 font-medium">處理進度</p>
                     <div className={`inline-block px-5 md:px-7 py-2.5 md:py-3.5 rounded-full text-base md:text-lg font-semibold ${
-                      currentTicket.status === "processing" ? "bg-blue-500 text-white" :
-                      currentTicket.status === "completed" ? "bg-green-500 text-white" :
-                      currentTicket.status === "cancelled" ? "bg-red-500 text-white" :
-                      "bg-yellow-500 text-white"
+                      currentTicket.status === "processing"
+                        ? "bg-blue-500 text-white"
+                        : currentTicket.status === "replied"
+                        ? "bg-indigo-500 text-white"
+                        : currentTicket.status === "completed"
+                        ? "bg-green-500 text-white"
+                        : currentTicket.status === "cancelled"
+                        ? "bg-red-500 text-white"
+                        : "bg-yellow-500 text-white"
                     }`}>
                       {statusLabels[currentTicket.status]}
                     </div>
@@ -249,6 +294,11 @@ export default function DisplayPage() {
                       PM：{ticket.assignee}
                     </div>
                   )}
+                  {ticket.status === "replied" && ticket.replyDate && (
+                    <div className="mt-2 p-2 bg-indigo-500/30 rounded text-xs text-indigo-100 break-words">
+                      已回覆累積天數：{Math.max(0, Math.floor((Date.now() - new Date(ticket.replyDate).getTime()) / (1000 * 60 * 60 * 24)))} 天
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -286,10 +336,15 @@ export default function DisplayPage() {
                 <div>
                   <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理進度</p>
                   <div className={`inline-block px-4 md:px-5 py-2 md:py-2.5 rounded-full text-sm md:text-base font-semibold ${
-                    viewingTicket.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                    viewingTicket.status === "processing" ? "bg-blue-100 text-blue-800" :
-                    viewingTicket.status === "completed" ? "bg-green-100 text-green-800" :
-                    "bg-red-100 text-red-800"
+                    viewingTicket.status === "pending"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : viewingTicket.status === "processing"
+                      ? "bg-blue-100 text-blue-800"
+                      : viewingTicket.status === "replied"
+                      ? "bg-indigo-100 text-indigo-800"
+                      : viewingTicket.status === "completed"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
                   }`}>
                     {statusLabels[viewingTicket.status]}
                   </div>
@@ -361,6 +416,43 @@ export default function DisplayPage() {
                     <p className="text-sm md:text-base font-medium text-gray-600 mb-2">PM</p>
                     <p className="text-base md:text-lg text-gray-900 break-words bg-purple-50 p-3 md:p-4 rounded-lg border-l-4 border-purple-500">
                       {viewingTicket.assignee}
+                    </p>
+                  </div>
+                )}
+
+                {/* FCST */}
+                {viewingTicket.fcst && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">FCST</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-yellow-50 p-3 md:p-4 rounded-lg border-l-4 border-yellow-500">
+                      {viewingTicket.fcst}
+                    </p>
+                  </div>
+                )}
+
+                {/* 預計量產日 */}
+                {viewingTicket.massProductionDate && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">預計量產日</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-green-50 p-3 md:p-4 rounded-lg border-l-4 border-green-500">
+                      {viewingTicket.massProductionDate}
+                    </p>
+                  </div>
+                )}
+
+                {/* 已回覆累積天數 */}
+                {viewingTicket.status === "replied" && viewingTicket.replyDate && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">已回覆累積天數</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-indigo-50 p-3 md:p-4 rounded-lg border-l-4 border-indigo-500">
+                      {Math.max(
+                        0,
+                        Math.floor(
+                          (Date.now() - new Date(viewingTicket.replyDate).getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        )
+                      )}{" "}
+                      天
                     </p>
                   </div>
                 )}

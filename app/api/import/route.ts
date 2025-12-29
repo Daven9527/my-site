@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
 import * as XLSX from "xlsx";
 
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
         };
 
         // 驗證狀態值
-        const validStatuses = ["pending", "processing", "completed", "cancelled"];
+        const validStatuses = ["pending", "processing", "replied", "completed", "cancelled"];
         if (!validStatuses.includes(ticketData.status)) {
           ticketData.status = "pending";
         }
@@ -155,4 +155,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
 

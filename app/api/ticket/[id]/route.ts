@@ -3,7 +3,7 @@ import { redis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
-type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
+type TicketStatus = "pending" | "processing" | "replied" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
@@ -13,6 +13,7 @@ interface TicketInfo {
   machineType?: string;
   startDate?: string;
   expectedCompletionDate?: string;
+  replyDate?: string;
   fcst?: string;
   massProductionDate?: string;
   status: TicketStatus;
@@ -39,6 +40,7 @@ export async function GET(
       machineType?: string;
       startDate?: string;
       expectedCompletionDate?: string;
+      replyDate?: string;
       fcst?: string;
       massProductionDate?: string;
       status?: string;
@@ -55,6 +57,7 @@ export async function GET(
         assignee: "",
         applicant: "",
         expectedCompletionDate: "",
+        replyDate: "",
         fcst: "",
         massProductionDate: "",
       });
@@ -68,6 +71,7 @@ export async function GET(
       machineType: data.machineType || "",
       startDate: data.startDate || "",
       expectedCompletionDate: data.expectedCompletionDate || "",
+      replyDate: data.replyDate || "",
       fcst: data.fcst || "",
       massProductionDate: data.massProductionDate || "",
       status: (data?.status || "pending") as TicketStatus,
@@ -100,10 +104,13 @@ export async function PATCH(
     const updates: Record<string, string> = {};
 
     if (status !== undefined && status !== null) {
-      if (!["pending", "processing", "completed", "cancelled"].includes(status)) {
+      if (!["pending", "processing", "replied", "completed", "cancelled"].includes(status)) {
         return NextResponse.json({ error: "無效的狀態" }, { status: 400 });
       }
       updates.status = String(status);
+      if (status === "replied") {
+        updates.replyDate = new Date().toISOString();
+      }
     }
 
     if (note !== undefined && note !== null) {
@@ -134,6 +141,7 @@ export async function PATCH(
       machineType?: string;
       startDate?: string;
       expectedCompletionDate?: string;
+      replyDate?: string;
       fcst?: string;
       massProductionDate?: string;
       status?: string;
@@ -149,6 +157,7 @@ export async function PATCH(
       machineType: data?.machineType || "",
       startDate: data?.startDate || "",
       expectedCompletionDate: data?.expectedCompletionDate || "",
+      replyDate: data?.replyDate || "",
       fcst: data?.fcst || "",
       massProductionDate: data?.massProductionDate || "",
       status: (data?.status || "pending") as TicketStatus,

@@ -8,7 +8,7 @@ interface QueueState {
   nextNumber?: number;
 }
 
-type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
+type TicketStatus = "pending" | "processing" | "replied" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
@@ -20,6 +20,7 @@ interface TicketInfo {
   expectedCompletionDate?: string;
   fcst?: string;
   massProductionDate?: string;
+  replyDate?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -35,6 +36,7 @@ const RESET_PASSWORD = "Eunice";
 const statusLabels: Record<TicketStatus, string> = {
   pending: "等待中",
   processing: "處理中",
+  replied: "已回覆",
   completed: "已完成",
   cancelled: "已取消",
 };
@@ -42,6 +44,7 @@ const statusLabels: Record<TicketStatus, string> = {
 const statusColors: Record<TicketStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
   processing: "bg-blue-100 text-blue-800",
+  replied: "bg-indigo-100 text-indigo-800",
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
 };
@@ -107,7 +110,7 @@ export default function AdminPage() {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch("/api/tickets", { cache: "no-store" });
+      const res = await fetch("/api/tickets?limit=50", { cache: "no-store" });
       const data: TicketListResponse = await res.json();
       setTickets(data.tickets || []);
     } catch (error) {
@@ -122,17 +125,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-
     fetchState();
     fetchTickets();
-    const interval = setInterval(() => {
-      fetchState();
-      // Only update tickets if not currently editing
-      if (editingTicketRef.current === null) {
-        fetchTickets();
-      }
-    }, 2000); // 每 2 秒更新一次
-    return () => clearInterval(interval);
   }, [isAuthenticated]);
 
   const handleNext = async () => {
@@ -708,6 +702,7 @@ export default function AdminPage() {
                         >
                           <option value="pending">等待中</option>
                           <option value="processing">處理中</option>
+                          <option value="replied">已回覆</option>
                           <option value="completed">已完成</option>
                           <option value="cancelled">已取消</option>
                         </select>
@@ -846,6 +841,16 @@ export default function AdminPage() {
                         <p className="text-sm md:text-base text-gray-900 break-words">
                           {ticket.assignee}
                         </p>
+                      </div>
+                    )}
+                    {ticket.status === "replied" && ticket.replyDate && (
+                      <div className="mt-2 text-xs md:text-sm text-gray-700">
+                        已回覆累積天數：{
+                          Math.max(
+                            0,
+                            Math.floor((Date.now() - new Date(ticket.replyDate).getTime()) / (1000 * 60 * 60 * 24))
+                          )
+                        } 天
                       </div>
                     )}
                     {ticket.fcst && (
@@ -1002,6 +1007,23 @@ export default function AdminPage() {
                     <p className="text-sm md:text-base font-medium text-gray-600 mb-2">預計量產日</p>
                     <p className="text-base md:text-lg text-gray-900 break-words bg-green-50 p-3 md:p-4 rounded-lg border-l-4 border-green-500">
                       {viewingTicket.massProductionDate}
+                    </p>
+                  </div>
+                )}
+
+                {/* 已回覆累積天數 */}
+                {viewingTicket.status === "replied" && viewingTicket.replyDate && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">已回覆累積天數</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-indigo-50 p-3 md:p-4 rounded-lg border-l-4 border-indigo-500">
+                      {Math.max(
+                        0,
+                        Math.floor(
+                          (Date.now() - new Date(viewingTicket.replyDate).getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        )
+                      )}{" "}
+                      天
                     </p>
                   </div>
                 )}

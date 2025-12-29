@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { redis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
-type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
+type TicketStatus = "pending" | "processing" | "replied" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
@@ -13,6 +13,7 @@ interface TicketInfo {
   machineType?: string;
   startDate?: string;
   expectedCompletionDate?: string;
+  replyDate?: string;
   fcst?: string;
   massProductionDate?: string;
   status: TicketStatus;
@@ -20,9 +21,13 @@ interface TicketInfo {
   assignee?: string;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const raw = await redis.lrange<number>("queue:tickets", 0, -1);
+    const limitParam = request.nextUrl.searchParams.get("limit");
+    const limit = Math.max(1, Math.min(Number(limitParam) || 50, 200));
+
+    // 只讀取最近 limit 筆號碼，減少讀取數量與 HGETALL 次數
+    const raw = await redis.lrange<number>("queue:tickets", -limit, -1);
 
     // Convert to number array
     const ticketNumbers: number[] = (raw ?? [])
@@ -44,6 +49,7 @@ export async function GET() {
           machineType?: string;
           startDate?: string;
           expectedCompletionDate?: string;
+          replyDate?: string;
           fcst?: string;
           massProductionDate?: string;
           status?: string;
@@ -52,7 +58,7 @@ export async function GET() {
         }>(key);
 
         // Validate status value
-        const validStatuses: TicketStatus[] = ["pending", "processing", "completed", "cancelled"];
+        const validStatuses: TicketStatus[] = ["pending", "processing", "replied", "completed", "cancelled"];
         const statusValue = data?.status || "pending";
         const status: TicketStatus = validStatuses.includes(statusValue as TicketStatus)
           ? (statusValue as TicketStatus)
@@ -66,6 +72,7 @@ export async function GET() {
           machineType: data?.machineType || "",
           startDate: data?.startDate || "",
           expectedCompletionDate: data?.expectedCompletionDate || "",
+          replyDate: data?.replyDate || "",
           fcst: data?.fcst || "",
           massProductionDate: data?.massProductionDate || "",
           status,
