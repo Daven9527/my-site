@@ -460,7 +460,7 @@ export default function AdminPage() {
                     setPassword(e.target.value);
                     setPasswordError("");
                   }}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                   placeholder="請輸入密碼"
                   autoFocus
                 />
@@ -1043,7 +1043,7 @@ export default function AdminPage() {
                           setSuperAdminPassword(e.target.value);
                           setSuperAdminPasswordError("");
                         }}
-                        className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none transition-colors"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none transition-colors"
                         placeholder="請輸入密碼"
                         autoFocus
                         required
