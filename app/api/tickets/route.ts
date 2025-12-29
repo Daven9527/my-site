@@ -12,6 +12,7 @@ interface TicketInfo {
   customerRequirement?: string;
   machineType?: string;
   startDate?: string;
+  expectedCompletionDate?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -40,6 +41,7 @@ export async function GET() {
           customerRequirement?: string;
           machineType?: string;
           startDate?: string;
+          expectedCompletionDate?: string;
           status?: string;
           note?: string;
           assignee?: string;
@@ -59,6 +61,7 @@ export async function GET() {
           customerRequirement: data?.customerRequirement || "",
           machineType: data?.machineType || "",
           startDate: data?.startDate || "",
+          expectedCompletionDate: data?.expectedCompletionDate || "",
           status,
           note: data?.note || "",
           assignee: data?.assignee || "",

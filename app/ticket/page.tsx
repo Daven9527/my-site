@@ -11,6 +11,7 @@ export default function TicketPage() {
     customerRequirement: "",
     machineType: "",
     startDate: "",
+    expectedCompletionDate: "",
   });
   const [loading, setLoading] = useState(false);
   const [ticketNumber, setTicketNumber] = useState<number | null>(null);
@@ -62,6 +63,7 @@ export default function TicketPage() {
       customerRequirement: "",
       machineType: "",
       startDate: "",
+      expectedCompletionDate: "",
     });
     setError(null);
   };
@@ -116,6 +118,12 @@ export default function TicketPage() {
                   <p className="text-xs md:text-sm text-gray-600">起始日期</p>
                   <p className="text-sm md:text-base font-medium text-gray-900">
                     {formData.startDate}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-gray-600">期望完成日期</p>
+                  <p className="text-sm md:text-base font-medium text-gray-900">
+                    {formData.expectedCompletionDate}
                   </p>
                 </div>
               </div>
@@ -238,6 +246,24 @@ export default function TicketPage() {
                 id="startDate"
                 name="startDate"
                 value={formData.startDate}
+                onChange={handleChange}
+                required
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="expectedCompletionDate"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                期望完成日期 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                id="expectedCompletionDate"
+                name="expectedCompletionDate"
+                value={formData.expectedCompletionDate}
                 onChange={handleChange}
                 required
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"

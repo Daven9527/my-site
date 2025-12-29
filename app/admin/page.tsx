@@ -16,6 +16,7 @@ interface TicketInfo {
   customerRequirement?: string;
   machineType?: string;
   startDate?: string;
+  expectedCompletionDate?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -625,6 +626,14 @@ export default function AdminPage() {
                   <div>
                     <p className="text-sm md:text-base font-medium text-gray-600 mb-2">起始日期</p>
                     <p className="text-base md:text-lg text-gray-900">{viewingTicket.startDate}</p>
+                  </div>
+                )}
+
+                {/* 期望完成日期 */}
+                {viewingTicket.expectedCompletionDate && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">期望完成日期</p>
+                    <p className="text-base md:text-lg text-gray-900">{viewingTicket.expectedCompletionDate}</p>
                   </div>
                 )}
 

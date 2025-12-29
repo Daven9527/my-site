@@ -6,10 +6,10 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { applicant, customerName, customerRequirement, machineType, startDate } = body;
+    const { applicant, customerName, customerRequirement, machineType, startDate, expectedCompletionDate } = body;
 
     // Validate required fields
-    if (!applicant || !customerName || !customerRequirement || !machineType || !startDate) {
+    if (!applicant || !customerName || !customerRequirement || !machineType || !startDate || !expectedCompletionDate) {
       return NextResponse.json(
         { error: "所有欄位都是必填的" },
         { status: 400 }
@@ -28,8 +28,10 @@ export async function POST(request: Request) {
       customerRequirement,
       machineType,
       startDate,
+      expectedCompletionDate,
       status: "pending",
       note: "",
+      assignee: "",
     });
 
     return NextResponse.json({ ticketNumber });

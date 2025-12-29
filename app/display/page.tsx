@@ -11,6 +11,12 @@ type TicketStatus = "pending" | "processing" | "completed" | "cancelled";
 
 interface TicketInfo {
   ticketNumber: number;
+  applicant?: string;
+  customerName?: string;
+  customerRequirement?: string;
+  machineType?: string;
+  startDate?: string;
+  expectedCompletionDate?: string;
   status: TicketStatus;
   note: string;
   assignee?: string;
@@ -37,6 +43,7 @@ const statusColors: Record<TicketStatus, string> = {
 export default function DisplayPage() {
   const [state, setState] = useState<QueueState>({ currentNumber: 0, lastTicket: 0 });
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
+  const [viewingTicket, setViewingTicket] = useState<TicketInfo | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -154,6 +161,21 @@ export default function DisplayPage() {
                     </p>
                   </div>
                 )}
+
+                {/* 期望完成日期 */}
+                {currentTicket?.expectedCompletionDate && (
+                  <div className="mt-4 md:mt-6 p-5 md:p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 text-left max-w-3xl mx-auto shadow-md">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg className="w-5 h-5 md:w-6 md:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-base md:text-lg font-bold text-green-900">期望完成日期</p>
+                    </div>
+                    <p className="text-sm md:text-base text-gray-800 break-words leading-relaxed">
+                      {currentTicket.expectedCompletionDate}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -182,7 +204,8 @@ export default function DisplayPage() {
               {sortedTickets.map((ticket) => (
                 <div
                   key={ticket.ticketNumber}
-                  className={`rounded-lg border-2 p-3 md:p-4 transition-all text-center ${
+                  onClick={() => setViewingTicket(ticket)}
+                  className={`rounded-lg border-2 p-3 md:p-4 transition-all text-center cursor-pointer hover:scale-105 ${
                     isCurrentNumber(ticket.ticketNumber)
                       ? "border-blue-500 bg-blue-500/20 backdrop-blur-sm"
                       : isCalled(ticket.ticketNumber)
@@ -225,6 +248,136 @@ export default function DisplayPage() {
           </div>
         )}
       </div>
+
+      {/* 彈窗：顯示完整票券資訊 */}
+      {viewingTicket && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50"
+          onClick={() => setViewingTicket(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 md:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  號碼 #{viewingTicket.ticketNumber} 詳細資訊
+                </h2>
+                <button
+                  onClick={() => setViewingTicket(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4 md:space-y-5">
+                {/* 狀態 */}
+                <div>
+                  <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理進度</p>
+                  <div className={`inline-block px-4 md:px-5 py-2 md:py-2.5 rounded-full text-sm md:text-base font-semibold ${
+                    viewingTicket.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                    viewingTicket.status === "processing" ? "bg-blue-100 text-blue-800" :
+                    viewingTicket.status === "completed" ? "bg-green-100 text-green-800" :
+                    "bg-red-100 text-red-800"
+                  }`}>
+                    {statusLabels[viewingTicket.status]}
+                  </div>
+                </div>
+
+                {/* 申請人 */}
+                {viewingTicket.applicant && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">申請人</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words">{viewingTicket.applicant}</p>
+                  </div>
+                )}
+
+                {/* 客戶名稱 */}
+                {viewingTicket.customerName && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">客戶名稱</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words">{viewingTicket.customerName}</p>
+                  </div>
+                )}
+
+                {/* 客戶需求 */}
+                {viewingTicket.customerRequirement && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">客戶需求</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-gray-50 p-3 md:p-4 rounded-lg">
+                      {viewingTicket.customerRequirement}
+                    </p>
+                  </div>
+                )}
+
+                {/* 預計使用機種 */}
+                {viewingTicket.machineType && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">預計使用機種</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words">{viewingTicket.machineType}</p>
+                  </div>
+                )}
+
+                {/* 起始日期 */}
+                {viewingTicket.startDate && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">起始日期</p>
+                    <p className="text-base md:text-lg text-gray-900">{viewingTicket.startDate}</p>
+                  </div>
+                )}
+
+                {/* 期望完成日期 */}
+                {viewingTicket.expectedCompletionDate && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">期望完成日期</p>
+                    <p className="text-base md:text-lg text-gray-900">{viewingTicket.expectedCompletionDate}</p>
+                  </div>
+                )}
+
+                {/* 管理員備註 */}
+                {viewingTicket.note && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">管理員備註</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words whitespace-pre-wrap bg-blue-50 p-3 md:p-4 rounded-lg border-l-4 border-blue-500">
+                      {viewingTicket.note}
+                    </p>
+                  </div>
+                )}
+
+                {/* 處理者 */}
+                {viewingTicket.assignee && (
+                  <div>
+                    <p className="text-sm md:text-base font-medium text-gray-600 mb-2">處理者</p>
+                    <p className="text-base md:text-lg text-gray-900 break-words bg-purple-50 p-3 md:p-4 rounded-lg border-l-4 border-purple-500">
+                      {viewingTicket.assignee}
+                    </p>
+                  </div>
+                )}
+
+                {/* 如果沒有客戶資訊，顯示提示 */}
+                {!viewingTicket.customerName && !viewingTicket.customerRequirement && !viewingTicket.machineType && !viewingTicket.startDate && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm md:text-base">此票券沒有客戶資訊</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 md:mt-8 flex gap-3">
+                <button
+                  onClick={() => setViewingTicket(null)}
+                  className="flex-1 rounded-lg bg-gray-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium hover:bg-gray-700 transition-colors"
+                >
+                  關閉
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
