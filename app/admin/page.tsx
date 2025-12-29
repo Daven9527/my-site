@@ -27,6 +27,7 @@ interface TicketListResponse {
 }
 
 const ADMIN_PASSWORD = "Bailey";
+const RESET_PASSWORD = "Eunice";
 
 const statusLabels: Record<TicketStatus, string> = {
   pending: "等待中",
@@ -54,6 +55,9 @@ export default function AdminPage() {
   const [editNote, setEditNote] = useState<string>("");
   const [editAssignee, setEditAssignee] = useState<string>("");
   const [viewingTicket, setViewingTicket] = useState<TicketInfo | null>(null);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetPasswordError, setResetPasswordError] = useState("");
   const editingTicketRef = useRef<number | null>(null);
 
   // Check if already authenticated (from sessionStorage)
@@ -136,8 +140,25 @@ export default function AdminPage() {
     }
   };
 
-  const handleReset = async () => {
-    if (!confirm("確定要重置系統嗎？")) return;
+  const handleResetClick = () => {
+    setShowResetPasswordModal(true);
+    setResetPassword("");
+    setResetPasswordError("");
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetPasswordError("");
+
+    if (resetPassword !== RESET_PASSWORD) {
+      setResetPasswordError("密碼錯誤，請重試");
+      setResetPassword("");
+      return;
+    }
+
+    // Password is correct, proceed with reset
+    setShowResetPasswordModal(false);
+    setResetPassword("");
     setLoading(true);
     try {
       await fetch("/api/reset", { method: "POST" });
@@ -145,9 +166,16 @@ export default function AdminPage() {
       await fetchTickets();
     } catch (error) {
       console.error("Failed to reset:", error);
+      alert("重置失敗，請重試");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResetCancel = () => {
+    setShowResetPasswordModal(false);
+    setResetPassword("");
+    setResetPasswordError("");
   };
 
   const startEdit = (ticket: TicketInfo) => {
@@ -339,7 +367,7 @@ export default function AdminPage() {
                 下一號
               </button>
               <button
-                onClick={handleReset}
+                onClick={handleResetClick}
                 disabled={loading}
                 className="w-full rounded-lg bg-red-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -682,6 +710,70 @@ export default function AdminPage() {
                   關閉
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 重置密碼彈窗 */}
+      {showResetPasswordModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={handleResetCancel}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 md:p-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">
+                重置系統確認
+              </h2>
+              <p className="text-sm md:text-base text-gray-600 mb-6 text-center">
+                此操作將清除所有號碼和資料，請輸入密碼確認
+              </p>
+              <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="resetPassword"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    密碼
+                  </label>
+                  <input
+                    type="password"
+                    id="resetPassword"
+                    value={resetPassword}
+                    onChange={(e) => {
+                      setResetPassword(e.target.value);
+                      setResetPasswordError("");
+                    }}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors"
+                    placeholder="請輸入重置密碼"
+                    autoFocus
+                    required
+                  />
+                  {resetPasswordError && (
+                    <p className="mt-2 text-sm text-red-600">{resetPasswordError}</p>
+                  )}
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleResetCancel}
+                    className="flex-1 rounded-lg bg-gray-200 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-gray-800 font-medium hover:bg-gray-300 transition-colors"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 rounded-lg bg-red-600 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base text-white font-medium shadow-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    確認重置
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
