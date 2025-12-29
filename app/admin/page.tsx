@@ -460,7 +460,7 @@ export default function AdminPage() {
                     setPassword(e.target.value);
                     setPasswordError("");
                   }}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                   placeholder="請輸入密碼"
                   autoFocus
                 />
@@ -543,7 +543,7 @@ export default function AdminPage() {
                       type="number"
                       value={newCurrentNumber}
                       onChange={(e) => setNewCurrentNumber(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       placeholder="輸入號碼"
                     />
                     <div className="flex gap-2">
@@ -597,7 +597,7 @@ export default function AdminPage() {
                       type="number"
                       value={newNextNumber}
                       onChange={(e) => setNewNextNumber(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       placeholder="輸入下一號"
                     />
                     <div className="flex gap-2">
@@ -702,7 +702,7 @@ export default function AdminPage() {
                         <select
                           value={editStatus}
                           onChange={(e) => setEditStatus(e.target.value as TicketStatus)}
-                          className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         >
                           <option value="pending">等待中</option>
                           <option value="processing">處理中</option>
@@ -718,7 +718,7 @@ export default function AdminPage() {
                           value={editNote}
                           onChange={(e) => setEditNote(e.target.value)}
                           rows={3}
-                          className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                          className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
                           placeholder="輸入備註內容..."
                         />
                       </div>
@@ -730,7 +730,7 @@ export default function AdminPage() {
                           type="text"
                           value={editAssignee}
                           onChange={(e) => setEditAssignee(e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                           placeholder="輸入處理者姓名"
                         />
                       </div>
@@ -1043,7 +1043,7 @@ export default function AdminPage() {
                           setSuperAdminPassword(e.target.value);
                           setSuperAdminPasswordError("");
                         }}
-                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none transition-colors"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-400 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none transition-colors"
                         placeholder="請輸入密碼"
                         autoFocus
                         required
